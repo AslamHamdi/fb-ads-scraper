@@ -13,9 +13,9 @@ class Post {
         const page = await browser.newPage()
         //this.preparePageForTest(page)
 
-        let url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
+        //let url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
 
-        //let url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
+        let url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
 
         await page.goto(url, { 'timeout': 10000, 'waitUntil': 'load' });
         await this.waitTillHTMLRendered(page)
@@ -44,11 +44,28 @@ class Post {
                     let adsList = (i == 1) ? adsNodesArr[i].querySelector("div:nth-child(4)").childNodes[0].childNodes : adsNodesArr[i].querySelector("div:nth-child(3)").childNodes[0].childNodes
                     let temp = []
                     adsList.forEach((o, i) => {
-                        let copy = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div > div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
+                        let parent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
+                        let copy = parent.querySelector(`div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
+                        let checkCreatives = parent.querySelector("div._23n- ")
+                        let creatives = []
+
+                        if (checkCreatives) {
+                            // Carousel
+                            let el = parent.querySelector("div._23n- > div > div > div").childNodes
+                            el.forEach((o, i) => {
+                                creatives.push(o.querySelector("img").src)
+                            })
+                        } else {
+                            // Video or single image
+                            let el = parent.querySelector(`div.x6ikm8r.x10wlt62`)
+                            creatives = el.querySelector("video") ? el.querySelector("video").src : el.querySelector("img").src
+                        }
+
                         let adsAttr = {
                             copy: copy,
-                            creative: ""
+                            creative: creatives
                         }
+
                         temp.push(adsAttr)
                     })
 
