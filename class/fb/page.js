@@ -13,37 +13,54 @@ class Post {
         const page = await browser.newPage()
         //this.preparePageForTest(page)
 
-        await page.goto('https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all')
+        let url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
 
-        await page.waitForSelector("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div")
-        await page.waitForSelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div");
-        await page.waitForSelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div._8n_0");
+        //let url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
 
+        await page.goto(url, { 'timeout': 10000, 'waitUntil': 'load' });
+        await this.waitTillHTMLRendered(page)
+        await this.autoScroll(page);
 
-        let pageContent = await page.evaluate(() => {
+        let pageContent = await page.evaluate(async () => {
+
             let data = {}
 
             let pageName = document.querySelector("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div").innerText
             let adsCount = document.querySelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div").innerText
             let allAdsParent = document.querySelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div._8n_0")
 
-            let arr = allAdsParent.childNodes
-            let temp = []
-            arr.forEach((o, i) => {
-                if (i == 1) {
-                    let arr2 = o.childNodes
-                    arr2.forEach((o2, i2) => {
-                        if (o2 == 0) {
-                            let monthPublished = o2.querySelector('[role="heading"]')
-                            temp.push(o2.innerText)
+            let adsNodesArr = allAdsParent.childNodes
+            let adsArr = []
+
+            adsNodesArr.forEach((o, i) => {
+                if (i > 0) {
+                    //let monthPublished = adsNodesArr[i].querySelector('[role="heading"]').textContent
+                    let monthPublished = adsNodesArr[i].childNodes[1].querySelector('[role="heading"]').textContent
+                    let adsData = {
+                        monthPublished: "",
+                        adsList: []
+                    }
+
+                    let adsList = (i == 1) ? adsNodesArr[i].querySelector("div:nth-child(4)").childNodes[0].childNodes : adsNodesArr[i].querySelector("div:nth-child(3)").childNodes[0].childNodes
+                    let temp = []
+                    adsList.forEach((o, i) => {
+                        let copy = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div > div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
+                        let adsAttr = {
+                            copy: copy,
+                            creative: ""
                         }
+                        temp.push(adsAttr)
                     })
+
+                    adsData.monthPublished = monthPublished
+                    adsData.adsList = temp
+                    adsArr.push(adsData)
                 }
             })
 
             data.pageName = pageName
             data.adsCount = adsCount
-            data.allAds = temp
+            data.allAds = adsArr
 
             return data
         })
@@ -54,11 +71,56 @@ class Post {
         return returner
     }
 
-    async preparePageForTest(page) {
-        const userAgent = 'Mozilla/5.0 (X11; Linux x86_64)' +
-            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36';
-        await page.setUserAgent(userAgent);
+    async waitTillHTMLRendered(page, timeout = 30000) {
+        const checkDurationMsecs = 1000;
+        const maxChecks = timeout / checkDurationMsecs;
+        let lastHTMLSize = 0;
+        let checkCounts = 1;
+        let countStableSizeIterations = 0;
+        const minStableSizeIterations = 3;
+
+        while (checkCounts++ <= maxChecks) {
+            let html = await page.content();
+            let currentHTMLSize = html.length;
+
+            let bodyHTMLSize = await page.evaluate(() => document.body.innerHTML.length);
+
+            console.log('last: ', lastHTMLSize, ' <> curr: ', currentHTMLSize, " body html size: ", bodyHTMLSize);
+
+            if (lastHTMLSize != 0 && currentHTMLSize == lastHTMLSize)
+                countStableSizeIterations++;
+            else
+                countStableSizeIterations = 0; //reset the counter
+
+            if (countStableSizeIterations >= minStableSizeIterations) {
+                console.log("Page rendered fully..");
+                break;
+            }
+
+            lastHTMLSize = currentHTMLSize;
+            await page.waitForTimeout(checkDurationMsecs);
+        }
     }
+
+    async autoScroll(page) {
+        await page.evaluate(async () => {
+            await new Promise((resolve) => {
+                var totalHeight = 0;
+                var distance = 100;
+                var timer = setInterval(() => {
+                    var scrollHeight = document.body.scrollHeight;
+                    window.scrollBy(0, distance);
+                    totalHeight += distance;
+
+                    if (totalHeight >= scrollHeight - window.innerHeight) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 100);
+            });
+        });
+    }
+
 }
 
 module.exports = Post
