@@ -32,9 +32,28 @@ class Post {
             let adsNodesArr = allAdsParent.childNodes
             let adsArr = []
 
+            const waitForElm = async (parent, selector) => {
+                return new Promise(resolve => {
+                    if (parent.querySelector(selector)) {
+                        return resolve(document.querySelector(selector));
+                    }
+
+                    const observer = new MutationObserver(mutations => {
+                        if (document.querySelector(selector)) {
+                            resolve(document.querySelector(selector));
+                            observer.disconnect();
+                        }
+                    });
+
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                });
+            }
+
             adsNodesArr.forEach((o, i) => {
                 if (i > 0) {
-                    //let monthPublished = adsNodesArr[i].querySelector('[role="heading"]').textContent
                     let monthPublished = adsNodesArr[i].childNodes[1].querySelector('[role="heading"]').textContent
                     let adsData = {
                         monthPublished: "",
@@ -43,31 +62,81 @@ class Post {
 
                     let adsList = (i == 1) ? adsNodesArr[i].querySelector("div:nth-child(4)").childNodes[0].childNodes : adsNodesArr[i].querySelector("div:nth-child(3)").childNodes[0].childNodes
                     let temp = []
-                    adsList.forEach((o, i) => {
-                        let parent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
-                        let copy = parent.querySelector(`div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
-                        let checkCreatives = parent.querySelector("div._23n- ")
+                    adsList.forEach(function (o, i) {
+                        let infoParent = o.querySelector("div.x1cy8zhl.x78zum5.xyamay9.x1pi30zi.x18d9i69.x1swvt13.x1n2onr6 > div > div").childNodes
+                        let adsStatus = infoParent[0].querySelector("div > div.xeuugli.x2lwn1j.x78zum5.xdt5ytf > div:nth-child(1) > span").innerHTML
+                        let adsRunDate = infoParent[1].querySelector("span").innerHTML
+                        let platformsParent = infoParent[2].querySelector("div").childNodes
+                        let adsId = infoParent[3].querySelector("div > div > span").innerHTML;
+
+                        let platforms = []
+                        adsId = adsId.replace("ID: ", "")
+                        let thi = this
+                        platformsParent.forEach(function (o, i) {
+                            const mouseEnterEvent = new Event('mouseenter')
+                            o.dispatchEvent(mouseEnterEvent)
+                            let toolTip = document.querySelector(`[data-ownerid="${o.id}"]`)
+                            toolTip = document.querySelector(`[data-ownerid="${o.id}"]`)
+                            //let elm = thi.waitForElm(toolTip, "div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli")
+                            // let elm = waitForElm(toolTip, "div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli").then((elm) => {
+                            //     console.log('Element is ready');
+                            //     return elm
+                            //     // if (elm) {
+                            //     //     platforms.push(elm.textContent);
+                            //     // } else {
+                            //     //     platforms.push("CANNOT GET");
+                            //     // }
+
+                            // });
+
+                            // if (elm) {
+                            //     platforms.push(elm.textContent);
+                            // } else {
+                            //     platforms.push("CANNOT GET");
+                            // }
+
+                            //platforms.push(elm.innerHTML)
+                            // if (toolTip) {
+                            //     let rl = toolTip.querySelector("div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli")
+                            //     if (rl) {
+                            //         platforms.push("GETT")
+                            //     } else {
+                            //         platforms.push("CANNOT GET")
+                            //     }
+                            //     console.log("RRRLL: ", rl)
+                            // } else {
+                            //     platforms.push("CANNOT GET")
+                            // }
+                        })
+
+                        let adsParent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
+                        let copy = adsParent.querySelector(`div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
+                        let checkCreatives = adsParent.querySelector("div._23n- ")
                         let creatives = []
 
                         if (checkCreatives) {
                             // Carousel
-                            let el = parent.querySelector("div._23n- > div > div > div").childNodes
+                            let el = adsParent.querySelector("div._23n- > div > div > div").childNodes
                             el.forEach((o, i) => {
                                 creatives.push(o.querySelector("img").src)
                             })
                         } else {
                             // Video or single image
-                            let el = parent.querySelector(`div.x6ikm8r.x10wlt62`)
+                            let el = adsParent.querySelector(`div.x6ikm8r.x10wlt62`)
                             creatives = el.querySelector("video") ? el.querySelector("video").src : el.querySelector("img").src
                         }
 
                         let adsAttr = {
+                            adsStatus: adsStatus,
+                            adsRunDate: adsRunDate,
+                            adsId: adsId,
                             copy: copy,
-                            creative: creatives
+                            platforms: platforms,
+                            creatives: creatives
                         }
 
                         temp.push(adsAttr)
-                    })
+                    }, this)
 
                     adsData.monthPublished = monthPublished
                     adsData.adsList = temp
@@ -80,7 +149,7 @@ class Post {
             data.allAds = adsArr
 
             return data
-        })
+        }, this)
 
         returner.result = pageContent
 
@@ -134,6 +203,26 @@ class Post {
                         resolve();
                     }
                 }, 100);
+            });
+        });
+    }
+
+    waitForElm(parent, selector) {
+        return new Promise(resolve => {
+            if (parent.querySelector(selector)) {
+                return resolve(document.querySelector(selector));
+            }
+
+            const observer = new MutationObserver(mutations => {
+                if (document.querySelector(selector)) {
+                    resolve(document.querySelector(selector));
+                    observer.disconnect();
+                }
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
             });
         });
     }
