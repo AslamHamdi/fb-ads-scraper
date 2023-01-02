@@ -53,24 +53,12 @@ class Post {
                         platformsParent.forEach(async function (o, i) {
                             const mouseEnterEvent = new Event('mouseenter')
                             o.dispatchEvent(mouseEnterEvent)
+                        })
 
-                            var observer = new MutationObserver(function (mutations) {
-                                if (document.querySelector(`[data-ownerid="${o.id}"]`)) {
-
-                                    let toolTip = document.querySelector(`[data-ownerid="${o.id}"]`)
-                                    let rl = toolTip.querySelector("div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli").classList
-                                    platforms.push(rl)
-                                    observer.disconnect();
-                                    //We can disconnect observer once the element exist if we dont want observe more changes in the DOM
-                                }
-                            });
-
-                            // Start observing
-                            observer.observe(document.body, { //document.body is node target to observe
-                                childList: true, //This is a must have for the observer with subtree
-                                subtree: true //Set to true if changes must also be observed in descendants.
-                            });
-
+                        platformsParent.forEach(async function (o, i) {
+                            let toolTip = document.querySelector(`[data-ownerid="${o.id}"]`)
+                            let rl = toolTip.querySelector("div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli").classList
+                            platforms.push(rl)
                         })
 
                         let adsParent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
