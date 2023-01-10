@@ -8,13 +8,6 @@ class FbScrapper {
     }
 
     async getPageDetils(pageId: string) {
-        let mongoClient;
-
-        try {
-            mongoClient = await mongo.connectToCluster("mongodb://localhost:27017");
-        } finally {
-            await mongoClient.close();
-        }
 
         let returner: {result?: any} = {}
 
@@ -36,7 +29,7 @@ class FbScrapper {
         });
 
         let pageContent = await page.evaluate(async () => {
-            let data: { pageName?: string, adsCount?: string, allAds?: object[] } = { }
+            let data: { _id?: string, pageName?: string, adsCount?: string, allAds?: object[] } = { }
 
             let pageName = document.querySelector<HTMLElement>("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div")?.innerText
             let adsCount = document.querySelector<HTMLElement>("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div")?.innerText
@@ -124,13 +117,14 @@ class FbScrapper {
 
                         temp.push(adsAttr)
                     })
-
+                    
                     adsData.monthPublished = monthPublished
                     adsData.adsList = temp
                     adsArr.push(adsData)
                 }
             })
-
+            
+            //data._id = 'asdasd1qqw'
             data.pageName = pageName
             data.adsCount = adsCount
             data.allAds = adsArr
@@ -138,6 +132,20 @@ class FbScrapper {
 
             return data
         })
+
+        let mongoClient;
+        console.log("PAGE CONTENT: ", pageContent)
+
+        try {
+            mongoClient = await mongo.connectToCluster("mongodb://localhost:27017");
+            const db = mongoClient.db('ads_lib_scrapper');
+            const collection = db.collection('pages');
+            await collection.insertOne(pageContent);
+        } catch(err){
+            console.log("ERR: ", err)
+        } finally {
+            await mongoClient.close();
+        }
 
         returner.result = pageContent
 
