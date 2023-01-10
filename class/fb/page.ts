@@ -6,12 +6,11 @@ class Post {
 
     }
 
-    async getPageDetils(pageId) {
-        let returner = {}
+    async getPageDetils(pageId: string) {
+        let returner: {result?: any} = {}
 
         const browser = await puppeteer.launch({})
         const page = await browser.newPage()
-        //this.preparePageForTest(page)
 
         //let url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
 
@@ -20,68 +19,83 @@ class Post {
         await page.goto(url, { 'timeout': 10000, 'waitUntil': 'load' });
         await this.waitTillHTMLRendered(page)
         await this.autoScroll(page);
+        page.on('console', async (msg: any) => {
+            const msgArgs = msg.args();
+            for (let i = 0; i < msgArgs.length; ++i) {
+                console.log(await msgArgs[i].jsonValue());
+            }
+        });
 
         let pageContent = await page.evaluate(async () => {
-            let data = {}
+            let data: { pageName?: string, adsCount?: string, allAds?: object[] } = { }
 
-            let pageName = document.querySelector("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div").innerText
-            let adsCount = document.querySelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div").innerText
+            let pageName = document.querySelector<HTMLElement>("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div")?.innerText
+            let adsCount = document.querySelector<HTMLElement>("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div")?.innerText
             let allAdsParent = document.querySelector("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div._8n_0")
 
-            let adsNodesArr = allAdsParent.childNodes
-            let adsArr = []
+            let adsNodesArr: any = allAdsParent?.childNodes
+            let adsArr: any = []
 
-            adsNodesArr.forEach(function (o, i) {
+            adsNodesArr?.forEach(function (o: any, i: number) {
                 if (i > 0) {
                     let monthPublished = adsNodesArr[i].childNodes[1].querySelector('[role="heading"]').textContent
-                    let adsData = {
+                    let adsData: {monthPublished?: string, adsList?: object[]} = {
                         monthPublished: "",
-                        adsList: []
+                        adsList: [{}]
                     }
-
                     let adsList = (i == 1) ? adsNodesArr[i].querySelector("div:nth-child(4)").childNodes[0].childNodes : adsNodesArr[i].querySelector("div:nth-child(3)").childNodes[0].childNodes
-                    let temp = []
-                    adsList.forEach(function (o, i) {
+                    let temp: object[] = []
+                    adsList.forEach(function (o: any, i: any) {
                         let infoParent = o.querySelector("div.x1cy8zhl.x78zum5.xyamay9.x1pi30zi.x18d9i69.x1swvt13.x1n2onr6 > div > div").childNodes
                         let adsStatus = infoParent[0].querySelector("div > div.xeuugli.x2lwn1j.x78zum5.xdt5ytf > div:nth-child(1) > span").innerHTML
                         let adsRunDate = infoParent[1].querySelector("span").innerHTML
                         let platformsParent = infoParent[2].querySelector("div").childNodes
                         let adsId = infoParent[3].querySelector("div > div > span").innerHTML;
 
-                        let platforms = []
+                        let platforms: string[] = []
+
                         adsId = adsId.replace("ID: ", "")
-                        platformsParent.forEach(async function (o, i) {
+
+                        platformsParent.forEach(async function (o: any, i: any) {
                             const mouseEnterEvent = new Event('mouseenter')
                             o.dispatchEvent(mouseEnterEvent)
 
-                            var observer = new MutationObserver(function (mutations) {
-                                if (document.querySelector(`[data-ownerid="${o.id}"]`)) {
+                            //#region code for tooltip. 
 
-                                    let toolTip = document.querySelector(`[data-ownerid="${o.id}"]`)
-                                    let rl = toolTip.querySelector("div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli").classList
-                                    platforms.push(rl)
-                                    observer.disconnect();
-                                    //We can disconnect observer once the element exist if we dont want observe more changes in the DOM
-                                }
-                            });
+                            // var observer = new MutationObserver(function (mutations) {
+                            //     if (document.querySelector(`[data-ownerid="${o.id}"]`)) {
 
-                            // Start observing
-                            observer.observe(document.body, { //document.body is node target to observe
-                                childList: true, //This is a must have for the observer with subtree
-                                subtree: true //Set to true if changes must also be observed in descendants.
-                            });
+                            //         let toolTip1 = document.querySelector(`[data-ownerid="${o.id}"]`).childNodes[0]
+                            //         let toolTip2 = toolTip1.querySelector(`div`).childNodes[0]
+                            //         let toolTip3 = toolTip2.querySelector(`div`).childNodes[0].textContent
+                            //         //let rl = toolTip.querySelector("div.x8t9es0.x1fvot60.xo1l8bm.xxio538.x108nfp6.xq9mrsl.x1yc453h.x1h4wwuj.xeuugli").innerHTML
+                            //         platforms.push("DAPAT")
+                            //         console.log("PLATFORMS: ", toolTip3)
+                            //         observer.disconnect();
+                            //         //We can disconnect observer once the element exist if we dont want observe more changes in the DOM
+                            //     }
+                            // });
 
+                            // // Start observing
+                            // observer.observe(document.body, { //document.body is node target to observe
+                            //     childList: true, //This is a must have for the observer with subtree
+                            //     subtree: true //Set to true if changes must also be observed in descendants.
+                            // });
+
+                            //#endregion
+                            platforms.push("DAPAT")
                         })
 
                         let adsParent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
                         let copy = adsParent.querySelector(`div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
                         let checkCreatives = adsParent.querySelector("div._23n- ")
-                        let creatives = []
+                        
+                        let creatives: any = []
 
                         if (checkCreatives) {
                             // Carousel
                             let el = adsParent.querySelector("div._23n- > div > div > div").childNodes
-                            el.forEach((o, i) => {
+                            el.forEach((o: any, i: any) => {
                                 creatives.push(o.querySelector("img").src)
                             })
                         } else {
@@ -111,6 +125,7 @@ class Post {
             data.pageName = pageName
             data.adsCount = adsCount
             data.allAds = adsArr
+            console.log("DATA: ", data)
 
             return data
         })
@@ -121,7 +136,7 @@ class Post {
         return returner
     }
 
-    async waitTillHTMLRendered(page, timeout = 30000) {
+    async waitTillHTMLRendered(page: any, timeout: number = 30000) {
         const checkDurationMsecs = 1000;
         const maxChecks = timeout / checkDurationMsecs;
         let lastHTMLSize = 0;
@@ -152,7 +167,7 @@ class Post {
         }
     }
 
-    async autoScroll(page) {
+    async autoScroll(page: any) {
         await page.evaluate(async () => {
             await new Promise((resolve) => {
                 var totalHeight = 0;
@@ -164,14 +179,14 @@ class Post {
 
                     if (totalHeight >= scrollHeight - window.innerHeight) {
                         clearInterval(timer);
-                        resolve();
+                        resolve(timer);
                     }
                 }, 100);
             });
         });
     }
 
-    async waitForElm(parent, selector) {
+    async waitForElm(parent: any, selector: any) {
         return new Promise(resolve => {
             if (parent.querySelector(selector)) {
                 return resolve(parent.querySelector(selector));
