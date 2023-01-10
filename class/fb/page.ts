@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer')
 const fs = require('fs/promises')
 
-class Post {
+class FbScrapper {
     constructor() {
 
     }
@@ -89,7 +89,7 @@ class Post {
                         let adsParent = o.querySelector(`div.x1dr75xp.xh8yej3.x16md763 > div.xrvj5dj.xdq2opy.xexx8yu.xbxaen2.x18d9i69.xbbxn1n.xdoe023.xbumo9q.x143o31f.x7sq92a.x1crum5w > div:nth-child(${i + 1}) > div > div.xh8yej3 > div > div`)
                         let copy = adsParent.querySelector(`div.x6ikm8r.x10wlt62 > div > span > div > div > div`).innerHTML
                         let checkCreatives = adsParent.querySelector("div._23n- ")
-                        
+
                         let creatives: any = []
 
                         if (checkCreatives) {
@@ -208,4 +208,4 @@ class Post {
 
 }
 
-module.exports = Post
+module.exports = FbScrapper
