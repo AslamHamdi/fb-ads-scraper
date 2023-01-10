@@ -1,19 +1,20 @@
 var MongoClient = require('mongodb').MongoClient;
 
-const uri = "mongodb+srv://Wokle:Wokle@23@localhost:27017?retryWrites=true&writeConcern=majority";
+//const uri = "mongodb+srv://Wokle:Wokle@23@localhost:27017?retryWrites=true&writeConcern=majority";
+//mongodb+srv://<username>:<password>@<clustername>.mongodb.net/
 
-const client = new MongoClient(uri);
-
-async function run() {
+exports.connectToCluster = async(uri: string) => {
+    let mongoClient;
+ 
     try {
-        // Connect the client to the server (optional starting in v4.7)
-        await client.connect();
-        // Establish and verify connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Connected successfully to server");
-    } finally {
-        // Ensures that the client will close when you finish/error
-        await client.close();
+        mongoClient = new MongoClient(uri);
+        console.log('Connecting to MongoDB Atlas cluster...');
+        await mongoClient.connect();
+        console.log('Successfully connected to MongoDB Atlas!');
+ 
+        return mongoClient;
+    } catch (error) {
+        console.error('Connection to MongoDB Atlas failed!', error);
+        process.exit();
     }
-}
-run().catch(console.dir);
+ }

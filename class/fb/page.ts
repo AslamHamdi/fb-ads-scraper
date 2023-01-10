@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer')
 const fs = require('fs/promises')
+const mongo = require('../../config/mongo-db')
 
 class FbScrapper {
     constructor() {
@@ -7,6 +8,14 @@ class FbScrapper {
     }
 
     async getPageDetils(pageId: string) {
+        let mongoClient;
+
+        try {
+            mongoClient = await mongo.connectToCluster("mongodb://localhost:27017");
+        } finally {
+            await mongoClient.close();
+        }
+
         let returner: {result?: any} = {}
 
         const browser = await puppeteer.launch({})
