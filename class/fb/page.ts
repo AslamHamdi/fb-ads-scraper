@@ -7,7 +7,7 @@ class FbScrapper {
 
     }
 
-    async getPageDetils(pageId: string) {
+    async getPageDetails(testo: string) {
 
         let returner: {result?: any} = {}
 
@@ -18,9 +18,13 @@ class FbScrapper {
 
         let url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
 
+        let params = new URLSearchParams(url);
+        let pageId: any = params.get('view_all_page_id');
+
         await page.goto(url, { 'timeout': 10000, 'waitUntil': 'load' });
         await this.waitTillHTMLRendered(page)
         await this.autoScroll(page);
+
         page.on('console', async (msg: any) => {
             const msgArgs = msg.args();
             for (let i = 0; i < msgArgs.length; ++i) {
@@ -28,8 +32,8 @@ class FbScrapper {
             }
         });
 
-        let pageContent = await page.evaluate(async () => {
-            let data: { _id?: string, pageName?: string, adsCount?: string, allAds?: object[] } = { }
+        let pageContent = await page.evaluate(async (pageId: any) => {
+            let data: { _id?: string, pageId?: string, pageName?: string, adsCount?: string, allAds?: object[] } = { }
 
             let pageName = document.querySelector<HTMLElement>("#content > div > div > div > div.x6s0dn4.x2izyaf.x78zum5.xdt5ytf.xh8yej3.x1vjfegm > div > div.xeuugli.x2lwn1j.x78zum5.xdl72j9.x1qughib.xexx8yu.xbxaen2.x18d9i69.x1u72gb5.x1anpbxc.x11i5rnm.xyorhqc.x1mh8g0r > div > div.xeuugli.x2lwn1j.x6s0dn4.x78zum5.xktsk01 > div > div > div > a > div")?.innerText
             let adsCount = document.querySelector<HTMLElement>("#content > div > div > div > div.x8bgqxi.x1n2onr6 > div.x2izyaf.x78zum5.xl56j7k.x1rdy4ex.x19gl646 > div > div > div > div > div > div.x6s0dn4.x78zum5 > div")?.innerText
@@ -62,7 +66,7 @@ class FbScrapper {
                             const mouseEnterEvent = new Event('mouseenter')
                             o.dispatchEvent(mouseEnterEvent)
 
-                            //#region code for tooltip. 
+                            //#region code for tooltip to get ads platforms. 
 
                             // var observer = new MutationObserver(function (mutations) {
                             //     if (document.querySelector(`[data-ownerid="${o.id}"]`)) {
@@ -125,14 +129,25 @@ class FbScrapper {
             })
             
             //data._id = 'asdasd1qqw'
+            data.pageId = pageId
             data.pageName = pageName
             data.adsCount = adsCount
             data.allAds = adsArr
             console.log("DATA: ", data)
 
             return data
-        })
+        }, pageId)
 
+        //pageContent.pageId = pageId
+        await this.saveIntoDb(pageContent)
+
+        returner.result = pageContent
+
+        await browser.close()
+        return returner
+    }
+
+    async saveIntoDb(pageContent: any){
         let mongoClient;
         console.log("PAGE CONTENT: ", pageContent)
 
@@ -142,15 +157,10 @@ class FbScrapper {
             const collection = db.collection('pages');
             await collection.insertOne(pageContent);
         } catch(err){
-            console.log("ERR: ", err)
+            console.log("error saving into db:: ", err)
         } finally {
             await mongoClient.close();
         }
-
-        returner.result = pageContent
-
-        await browser.close()
-        return returner
     }
 
     async waitTillHTMLRendered(page: any, timeout: number = 30000) {
