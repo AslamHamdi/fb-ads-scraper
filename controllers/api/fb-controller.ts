@@ -9,3 +9,13 @@ exports.getPageDetails = async (req: any, res: any, next: any) => {
         console.log(error)
     }
 }
+
+exports.compareNewOld = async (req: any, res: any, next: any) => {
+    try {
+        let data = new Post()
+        data = await data.compareNewOld()
+        res.status(200).json({ data })
+    } catch (error) {
+        console.log(error)
+    }
+}

@@ -3,17 +3,19 @@ const fs = require('fs/promises')
 const mongo = require('../../config/mongo-db')
 
 class FbScrapper {
-    constructor() {
 
+    url: string
+
+    constructor(url: string) {
+        this.url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
+        //this.url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
     }
 
     async getPageDetails(testo: string) {
 
         let returner: {result?: any} = {}
 
-        let url = 'https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=187899693689&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all'
-
-        //let url = "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=MY&view_all_page_id=154212051285906&sort_data[direction]=desc&sort_data[mode]=relevancy_monthly_grouped&search_type=page&media_type=all"
+        let url = this.url
 
         let params = new URLSearchParams(url);
         let pageId: any = params.get('view_all_page_id');
@@ -371,6 +373,10 @@ class FbScrapper {
                 subtree: true
             });
         });
+    }
+
+    async compareNewOld(parent: any, selector: any) {
+
     }
 
 }

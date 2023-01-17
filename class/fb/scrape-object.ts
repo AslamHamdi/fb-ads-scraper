@@ -1,3 +1,5 @@
+const _ = require("lodash")
+
 class ScrapeObject {
     constructor() {
 
@@ -6,5 +8,8 @@ class ScrapeObject {
     async Compare(oldObj: any, newObj: any){
         
     }
+
 }
+
+module.exports = ScrapeObject
 
