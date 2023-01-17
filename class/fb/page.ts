@@ -35,7 +35,6 @@ class FbScrapper {
                     if (tempNew.length == 0 && tempOld.length > 0){
                         console.log("old ada new tada")
 
-                        //tempOld[tempOld.length - 1].pageId.replace("old", "new")
                         delete tempOld[tempOld.length - 1]._id
                         pageId = `${pageId}-new`
                         temp.push(tempOld[tempOld.length - 1])
