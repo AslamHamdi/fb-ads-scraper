@@ -78,7 +78,7 @@ class FbScrapper {
             }
         }
         console.log("PASS PGAE ID: ", pageId)
-        let pageContent: any = await this.scrapPageAdsLibrary(pageId, url)
+        let pageContent: any = await this.scrapePageAdsLibrary(pageId, url)
 
         if (pageContent) {
             if(dbStatus == "insert"){
@@ -96,7 +96,7 @@ class FbScrapper {
         return returner
     }
 
-    async scrapPageAdsLibrary(pageId: string, url: string){
+    async scrapePageAdsLibrary(pageId: string, url: string){
         const browser = await puppeteer.launch({})
         const page = await browser.newPage()
 
